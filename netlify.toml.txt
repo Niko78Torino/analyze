@@ -1,8 +1,15 @@
-[build]
-  command = "npm run build"
-  functions = "netlify/functions"
-  publish = "dist"
+# File: netlify.toml
 
+[build]
+  # Il comando per costruire il tuo sito React (es. per Vite)
+  command = "npm run build"
+  # La cartella dove si trovano le tue funzioni
+  functions = "netlify/functions"
+  # La cartella che viene pubblicata dopo la build
+  publish = "dist" # (o "build" se usi Create React App)
+
+# Questa regola reindirizza tutte le chiamate da /api/*
+# alla tua funzione Netlify corrispondente.
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
