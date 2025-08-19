@@ -1,63 +1,103 @@
 import React, { useState, useEffect } from 'react';
 import { GitBranch, FileCode, History, CheckCircle, XCircle, AlertTriangle, Loader, Shield, Zap, Bug, Wrench, Search, Globe, Accessibility, ChevronDown, Sparkles } from 'lucide-react';
 
-// --- MOTORI DI ANALISI SIMULATI (COME PRIMA) ---
+// --- MOTORI DI ANALISI SIMULATI (CON DETTAGLI SUGLI ERRORI) ---
+
 const runRepoAnalysis = (repoUrl) => {
-    // ... (Il codice di analisi simulata rimane invariato)
     const randomScore = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+    const randomItem = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    const randomPercent = (max) => (Math.random() * max).toFixed(2);
+
+    const qualityScore = randomScore(60, 98);
+    const securityScore = randomScore(45, 95);
+    const performanceScore = randomScore(55, 99);
+    const maintainabilityScore = randomScore(65, 92);
+    const overallScore = Math.round((qualityScore + securityScore + performanceScore + maintainabilityScore) / 4);
+
     return {
         url: repoUrl,
         type: 'repository',
-        overallScore: randomScore(65, 95),
+        overallScore,
         date: new Date().toISOString(),
         categories: {
-            quality: { title: 'Qualità del Codice', score: randomScore(60, 98), icon: <Bug className="w-8 h-8 text-red-500" />, checks: [
-                { id: 'linting', text: 'Errori di Linting', status: 'pass', description: 'Nessun errore critico di linting trovato.' },
-                { id: 'code_smells', text: 'Code Smells', status: 'fail', description: `Rilevati ${randomScore(5, 15)} code smells.`, details: {
+            quality: { title: 'Qualità del Codice', score: qualityScore, icon: <Bug className="w-8 h-8 text-red-500" />, checks: [
+                { id: 'linting', text: 'Errori di Linting', status: 'pass', description: 'Nessun errore critico di linting trovato nel codebase.' },
+                { id: 'code_smells', text: 'Code Smells', status: 'fail', description: `Rilevati ${randomScore(5, 15)} code smells di media priorità.`, details: {
                     problem: 'Funzioni con troppe responsabilità e variabili non utilizzate.\n- src/utils/helpers.js:45 (Funzione "processData")\n- src/components/LegacyChart.jsx:112 (Componente con 500+ righe)',
-                    solution: 'Effettuare il refactoring della funzione "processData" dividendola in funzioni più piccole. Rimuovere le variabili non utilizzate e scomporre il componente LegacyChart.'
+                    solution: 'Effettuare il refactoring della funzione "processData" dividendola in funzioni più piccole e specifiche. Rimuovere le variabili non utilizzate e considerare la scomposizione del componente LegacyChart.'
                 }},
-                { id: 'duplication', text: 'Duplicazione del Codice', status: 'warn', description: `Duplicazione del codice al 7%.`, details: {
-                    problem: 'Blocchi di codice quasi identici trovati in più file.\n- src/api/users.js\n- src/api/products.js',
-                    solution: 'Estrarre la logica duplicata in una funzione di utility condivisa.'
+                { id: 'duplication', text: 'Duplicazione del Codice', status: 'warn', description: `La duplicazione del codice è al ${randomPercent(10)}%.`, details: {
+                    problem: 'Blocchi di codice quasi identici trovati in più file.\n- src/api/users.js (righe 25-40)\n- src/api/products.js (righe 30-45)',
+                    solution: 'Estrarre la logica duplicata in una funzione di utility condivisa o in un custom hook per centralizzare la gestione delle chiamate API.'
+                }},
+                { id: 'complexity', text: 'Complessità Ciclomatica', status: 'pass', description: `La complessità media è di ${randomScore(8, 12)}, entro i limiti accettabili.` },
+            ]},
+            security: { title: 'Sicurezza', score: securityScore, icon: <Shield className="w-8 h-8 text-blue-500" />, checks: [
+                { id: 'vulnerabilities', text: 'Vulnerabilità Note (CVEs)', status: 'fail', description: `Scansione ha rilevato ${randomScore(1, 3)} vulnerabilità critiche.`, details: {
+                    problem: 'La dipendenza "express" è alla versione 4.17.1, affetta da CVE-2022-24999 (Cross-Site Scripting).',
+                    solution: 'Aggiornare immediatamente il pacchetto "express" alla versione più recente e sicura eseguendo `npm update express` o `yarn upgrade express`.'
+                }},
+                { id: 'secrets', text: 'Secrets in-code', status: 'pass', description: 'Nessuna chiave API o credenziale hardcoded trovata nel repository.' },
+            ]},
+            performance: { title: 'Performance Applicativa', score: performanceScore, icon: <Zap className="w-8 h-8 text-green-500" />, checks: [
+                { id: 'memory_leaks', text: 'Potenziali Memory Leaks', status: 'warn', description: 'L\'analisi statica ha identificato un possibile memory leak.', details: {
+                    problem: 'In src/components/RealtimeData.jsx, un `setInterval` viene inizializzato in `useEffect` ma non viene pulito al unmount del componente.',
+                    solution: 'Restituire una funzione di cleanup da `useEffect` che chiami `clearInterval` per annullare il timer quando il componente viene smontato.'
                 }},
             ]},
-            security: { title: 'Sicurezza', score: randomScore(45, 95), icon: <Shield className="w-8 h-8 text-blue-500" />, checks: [
-                { id: 'vulnerabilities', text: 'Vulnerabilità Note (CVEs)', status: 'fail', description: `Rilevate 2 vulnerabilità critiche.`, details: {
-                    problem: 'La dipendenza "express" è a una versione obsoleta (4.17.1), affetta da CVE-2022-24999 (Cross-Site Scripting).',
-                    solution: 'Aggiornare immediatamente il pacchetto "express" alla versione più recente e sicura.'
+            maintainability: { title: 'Manutenibilità', score: maintainabilityScore, icon: <Wrench className="w-8 h-8 text-purple-500" />, checks: [
+                { id: 'test_coverage', text: 'Copertura dei Test', status: 'warn', description: `La copertura totale dei test è del ${randomScore(60, 75)}%.`, details: {
+                    problem: 'La copertura dei test è inferiore alla soglia raccomandata dell\'80%. I moduli `src/utils` e `src/api` hanno una copertura particolarmente bassa.',
+                    solution: 'Scrivere test unitari e di integrazione aggiuntivi per le funzioni e i componenti critici, con l\'obiettivo di raggiungere almeno l\'80% di copertura.'
                 }},
-                { id: 'secrets', text: 'Secrets in-code', status: 'pass', description: 'Nessuna chiave API o credenziale hardcoded trovata.' },
+                { id: 'documentation', text: 'Documentazione del Codice', status: 'pass', description: 'La documentazione inline copre l\'85% delle funzioni pubbliche.' },
             ]},
         }
     };
 };
+
 const runWebAppAnalysis = (webUrl) => {
     const randomScore = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+    
     return {
         url: webUrl,
         type: 'website',
         overallScore: randomScore(70, 90),
         date: new Date().toISOString(),
         categories: {
+            seo: { title: 'SEO Tecnico', score: randomScore(80, 95), icon: <Search className="w-8 h-8 text-blue-500" />, checks: [
+                { id: 'meta_tags', text: 'Meta Tag Essenziali', status: 'pass', description: 'Tag <title> e meta description sono presenti e ottimizzati.' },
+                { id: 'structured_data', text: 'Dati Strutturati (Schema.org)', status: 'warn', description: 'Markup Schema.org mancante per i prodotti.', details: {
+                    problem: 'Le pagine dei prodotti non contengono dati strutturati di tipo "Product", limitando la visibilità nei risultati di ricerca avanzati (rich snippet).',
+                    solution: 'Implementare lo schema "Product" in formato JSON-LD nelle pagine dei prodotti, includendo proprietà come "name", "image", "description", "brand", e "offers".'
+                }},
+            ]},
             performance: { title: 'Performance Web', score: randomScore(60, 80), icon: <Zap className="w-8 h-8 text-green-500" />, checks: [
                 { id: 'core_web_vitals', text: 'Core Web Vitals', status: 'fail', description: 'Il punteggio LCP (Largest Contentful Paint) è superiore a 4s.', details: {
-                    problem: 'L\'immagine principale (hero image) sulla homepage è molto pesante (2.5MB) e non è ottimizzata.',
-                    solution: 'Comprimere l\'immagine, convertirla in formato WebP, e precaricarla nel <head>.'
+                    problem: 'L\'immagine principale (hero image) sulla homepage è molto pesante (2.5MB) e non è ottimizzata, bloccando il rendering della pagina.',
+                    solution: 'Comprimere l\'immagine utilizzando un tool come Squoosh, convertirla in formato WebP, e precaricarla nel <head> con `<link rel="preload">` per velocizzarne il caricamento.'
                 }},
+                { id: 'caching_policy', text: 'Policy di Caching', status: 'pass', description: 'Header di caching efficaci per ridurre i tempi di caricamento.' },
             ]},
             accessibility: { title: 'Accessibilità (WCAG)', score: randomScore(70, 90), icon: <Accessibility className="w-8 h-8 text-indigo-500" />, checks: [
                 { id: 'contrast', text: 'Contrasto Colori', status: 'warn', description: 'Alcuni testi hanno un basso contrasto.', details: {
-                    problem: 'Il testo grigio chiaro (#999999) su sfondo bianco nel footer non rispetta il rapporto di contrasto minimo di 4.5:1.',
-                    solution: 'Scurire il colore del testo del footer ad almeno #767676 per garantire la leggibilità.'
+                    problem: 'Il testo grigio chiaro (#999999) su sfondo bianco nel footer non rispetta il rapporto di contrasto minimo di 4.5:1 richiesto dalle linee guida WCAG AA.',
+                    solution: 'Scurire il colore del testo del footer ad almeno #767676 per raggiungere il rapporto di contrasto richiesto e garantire la leggibilità.'
+                }},
+                { id: 'keyboard_nav', text: 'Navigazione da Tastiera', status: 'pass', description: 'Tutti gli elementi interattivi sono raggiungibili e operabili via tastiera.' },
+            ]},
+            security: { title: 'Sicurezza Web', score: randomScore(80, 95), icon: <Shield className="w-8 h-8 text-teal-500" />, checks: [
+                { id: 'https', text: 'HTTPS', status: 'pass', description: 'Il sito utilizza una connessione sicura con un certificato valido.' },
+                { id: 'lib_vulnerabilities', text: 'Vulnerabilità Librerie JS', status: 'fail', description: 'Rilevata una libreria front-end con vulnerabilità note.', details: {
+                    problem: 'Il sito utilizza la versione 3.3.1 di jQuery, che è affetta da una vulnerabilità di tipo Cross-Site Scripting (XSS).',
+                    solution: 'Aggiornare jQuery almeno alla versione 3.5.0 o superiore, che contiene la patch di sicurezza per questa vulnerabilità.'
                 }},
             ]},
         }
     };
 };
 
-
-// --- COMPONENTI UI (CON MODIFICHE) ---
+// --- COMPONENTI UI ---
 
 const StatusIcon = ({ status }) => {
     switch (status) {
@@ -76,7 +116,6 @@ const CheckItem = ({ check }) => {
 
     const hasDetails = check.details && (check.status === 'warn' || check.status === 'fail');
 
-    // NUOVA FUNZIONE: Chiama la Netlify Function per ottenere suggerimenti AI
     const getAiHelp = async () => {
         setIsLoadingAi(true);
         setAiError('');
@@ -94,9 +133,6 @@ const CheckItem = ({ check }) => {
         `;
 
         try {
-            // IMPORTANTE: Questa è la chiamata sicura.
-            // Chiama il nostro endpoint API, che Netlify reindirizzerà alla funzione server.
-            // Il codice del browser non vedrà mai la chiave API.
             const response = await fetch('/api/getAISuggestion', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -110,7 +146,6 @@ const CheckItem = ({ check }) => {
 
             const data = await response.json();
             
-            // Estrae il testo dalla risposta di Gemini
             const suggestionText = data.candidates[0]?.content?.parts[0]?.text;
             if (suggestionText) {
                 setAiSuggestion(suggestionText);
@@ -158,7 +193,6 @@ const CheckItem = ({ check }) => {
                     </div>
                 </div>
             )}
-            {/* NUOVA SEZIONE: Mostra i risultati della chiamata AI */}
             {isLoadingAi && <div className="mt-2 ml-8 pl-4"><Loader className="animate-spin text-purple-500" /></div>}
             {aiError && <div className="mt-2 ml-8 pl-4 text-red-500 text-sm bg-red-100 dark:bg-red-900/50 p-2 rounded-md"><strong>Errore AI:</strong> {aiError}</div>}
             {aiSuggestion && (
@@ -194,8 +228,6 @@ const ReportCard = ({ title, score, checks, icon }) => {
     );
 };
 
-// --- ALTRI COMPONENTI (Dashboard, Report, HistoryPage, App) ---
-// ... (Questi componenti rimangono per lo più invariati)
 const Dashboard = ({ onAnalyze, isLoading }) => {
     const [url, setUrl] = useState('');
     const [analysisType, setAnalysisType] = useState('repository');
@@ -318,6 +350,7 @@ const HistoryPage = ({ history, onViewReport, onClearHistory }) => {
     );
 };
 
+// --- COMPONENTE PRINCIPALE ---
 export default function App() {
     const [page, setPage] = useState('dashboard');
     const [currentReport, setCurrentReport] = useState(null);
@@ -335,6 +368,27 @@ export default function App() {
             localStorage.setItem('professionalAnalysisHistory', JSON.stringify(history));
         } catch (error) { console.error("Could not save history", error); }
     }, [history]);
+
+    useEffect(() => {
+        // Aggiunge il meta tag e lo script di AdSense al mount del componente
+        const meta = document.createElement('meta');
+        meta.name = "google-adsense-account";
+        meta.content = "ca-pub-8268426852108056";
+        document.head.appendChild(meta);
+
+        const script = document.createElement("script");
+        script.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8268426852108056";
+        script.async = true;
+        script.crossOrigin = "anonymous";
+        document.head.appendChild(script);
+
+        // Funzione di cleanup per rimuovere gli elementi al unmount
+        return () => {
+            document.head.removeChild(meta);
+            document.head.removeChild(script);
+        };
+    }, []);
+
 
     useEffect(() => {
         const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -392,7 +446,23 @@ export default function App() {
             </header>
             <main className="container mx-auto px-4 py-8">{renderPage()}</main>
             <footer className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
-                <p>&copy; 2025 Professional Analyzer. Dati a scopo dimostrativo.</p>
+                <div className="space-y-2">
+                    <p>
+                        Ti piace questo strumento?&nbsp;
+                        <a 
+                            href="https://buy.stripe.com/6oUcN7fF7cJC2kU8hsdjO0f" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-blue-600 dark:text-blue-400 hover:underline font-semibold"
+                        >
+                            Dona una mancia ☕
+                        </a>
+                    </p>
+                    <p>&copy; 2025 Nicola Nicolaci. Tutti i diritti riservati.</p>
+                    <p className="max-w-4xl mx-auto px-4 text-xs">
+                        <strong>Disclaimer:</strong> Questa è un'interfaccia di analisi professionale. In un ambiente di produzione, si collegherebbe a servizi di analisi statica (SAST) per i repository e a tool di crawling e audit (come Lighthouse) per i siti web. I dati visualizzati sono generati a scopo dimostrativo.
+                    </p>
+                </div>
             </footer>
         </div>
     );
