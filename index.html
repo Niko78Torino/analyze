@@ -5,10 +5,6 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- 
-      Il tag <title> deve contenere SOLO testo. 
-      Questo è il punto più comune per l'errore di parsing.
-    -->
     <title>Suite di Analisi Professionale</title>
 
     <!-- Meta tag per SEO e AdSense -->
@@ -20,8 +16,11 @@
     <!-- L'applicazione React verrà montata qui -->
     <div id="root"></div>
     
-    <!-- Lo script di ingresso per Vite -->
-    <script type="module" src="/src/main.jsx"></script>
+    <!-- 
+      CORREZIONE: Il percorso dello script ora è relativo ("./src/main.jsx") 
+      per essere compatibile con il processo di build di Netlify.
+    -->
+    <script type="module" src="./src/main.jsx"></script>
     
     <!-- Script di AdSense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8268426852108056"
