@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import { GitBranch, FileCode, History, CheckCircle, XCircle, AlertTriangle, Loader, Shield, Zap, Bug, Wrench, Search, Globe, Accessibility, ChevronDown } from 'lucide-react';
 
 // --- MOTORI DI ANALISI SIMULATI (CON DETTAGLI SUGLI ERRORI) ---
 
 const runRepoAnalysis = (repoUrl) => {
     const randomScore = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-    const randomItem = (arr) => arr[Math.floor(Math.random() * arr.length)];
     const randomPercent = (max) => (Math.random() * max).toFixed(2);
 
     const qualityScore = randomScore(60, 98);
@@ -97,18 +96,18 @@ const runWebAppAnalysis = (webUrl) => {
     };
 };
 
-// --- COMPONENTI UI ---
+// --- COMPONENTI UI OTTIMIZZATI ---
 
-const StatusIcon = ({ status }) => {
+const StatusIcon = memo(({ status }) => {
     switch (status) {
         case 'pass': return <CheckCircle className="text-green-500 w-5 h-5 flex-shrink-0" />;
         case 'warn': return <AlertTriangle className="text-yellow-500 w-5 h-5 flex-shrink-0" />;
         case 'fail': return <XCircle className="text-red-500 w-5 h-5 flex-shrink-0" />;
         default: return null;
     }
-};
+});
 
-const CheckItem = ({ check }) => {
+const CheckItem = memo(({ check }) => {
     const [isOpen, setIsOpen] = useState(false);
     const hasDetails = check.details && (check.status === 'warn' || check.status === 'fail');
 
@@ -139,9 +138,9 @@ const CheckItem = ({ check }) => {
             )}
         </li>
     );
-};
+});
 
-const ReportCard = ({ title, score, checks, icon }) => {
+const ReportCard = memo(({ title, score, checks, icon }) => {
     const getScoreColor = (s) => {
         if (s >= 90) return 'text-green-500';
         if (s >= 70) return 'text-yellow-500';
@@ -159,7 +158,7 @@ const ReportCard = ({ title, score, checks, icon }) => {
             </ul>
         </div>
     );
-};
+});
 
 const Dashboard = ({ onAnalyze, isLoading }) => {
     const [url, setUrl] = useState('');
@@ -266,8 +265,9 @@ const HistoryPage = ({ history, onViewReport, onClearHistory }) => {
             ) : (
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
                     <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-                        {history.map((item, index) => (
-                            <li key={index} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                        {/* MIGLIORAMENTO: Usare una chiave stabile come la data invece dell'indice */}
+                        {history.map((item) => (
+                            <li key={item.date} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex flex-col sm:flex-row justify-between items-start sm:items-center">
                                 <div className="mb-2 sm:mb-0">
                                     <span className={`text-xs font-bold uppercase py-1 px-2 rounded-full ${item.type === 'repository' ? 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200' : 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200'}`}>{item.type}</span>
                                     <p className="font-bold text-blue-600 dark:text-blue-400 break-all mt-1">{item.url}</p>
@@ -303,7 +303,7 @@ export default function App() {
     }, [history]);
 
     useEffect(() => {
-        // Aggiunge il meta tag e lo script di AdSense al mount del componente
+        // Questo effetto per AdSense è corretto per un'app a pagina singola
         const meta = document.createElement('meta');
         meta.name = "google-adsense-account";
         meta.content = "ca-pub-8268426852108056";
@@ -315,7 +315,6 @@ export default function App() {
         script.crossOrigin = "anonymous";
         document.head.appendChild(script);
 
-        // Funzione di cleanup per rimuovere gli elementi al unmount
         return () => {
             document.head.removeChild(meta);
             document.head.removeChild(script);
@@ -336,7 +335,8 @@ export default function App() {
         else { document.documentElement.classList.remove('dark'); }
     }, [isDarkMode]);
 
-    const handleAnalyze = (url, type) => {
+    // MIGLIORAMENTO: `useCallback` per evitare di ricreare le funzioni ad ogni render
+    const handleAnalyze = useCallback((url, type) => {
         setIsLoading(true);
         setTimeout(() => {
             const report = type === 'repository' ? runRepoAnalysis(url) : runWebAppAnalysis(url);
@@ -345,14 +345,14 @@ export default function App() {
             setPage('report');
             setIsLoading(false);
         }, 2500);
-    };
+    }, []); // Le dipendenze sono vuote perché non usa state o props esterni
 
-    const handleViewReport = (report) => {
+    const handleViewReport = useCallback((report) => {
         setCurrentReport(report);
         setPage('report');
-    };
+    }, []);
     
-    const handleClearHistory = () => setHistory([]);
+    const handleClearHistory = useCallback(() => setHistory([]), []);
 
     const renderPage = () => {
         switch (page) {
@@ -373,7 +373,8 @@ export default function App() {
                     <div className="flex items-center space-x-4">
                         <button onClick={() => setPage('dashboard')} className={`px-3 py-2 rounded-md text-sm font-medium ${page === 'dashboard' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'}`}>Dashboard</button>
                         <button onClick={() => setPage('history')} className={`px-3 py-2 rounded-md text-sm font-medium ${page === 'history' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'}`}>Cronologia</button>
-                        <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">{isDarkMode ? '☀️' : '🌙'}</button>
+                        {/* MIGLIORAMENTO: Aggiunto aria-label per l'accessibilità */}
+                        <button onClick={() => setIsDarkMode(!isDarkMode)} aria-label="Toggle light/dark theme" className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">{isDarkMode ? '☀️' : '🌙'}</button>
                     </div>
                 </nav>
             </header>
@@ -391,7 +392,8 @@ export default function App() {
                             Dona una mancia ☕
                         </a>
                     </p>
-                    <p>&copy; 2025 Nicola Nicolaci. Tutti i diritti riservati.</p>
+                    {/* MIGLIORAMENTO: Anno del copyright dinamico */}
+                    <p>&copy; {new Date().getFullYear()} Nicola Nicolaci. Tutti i diritti riservati.</p>
                     <p className="max-w-4xl mx-auto px-4 text-xs">
                         <strong>Disclaimer:</strong> Questa è un'interfaccia di analisi professionale. In un ambiente di produzione, si collegherebbe a servizi di analisi statica (SAST) per i repository e a tool di crawling e audit (come Lighthouse) per i siti web. I dati visualizzati sono generati a scopo dimostrativo.
                     </p>
