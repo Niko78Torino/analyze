@@ -1,16 +1,13 @@
 # File: netlify.toml
 
 [build]
-  # Il comando per costruire il tuo sito React (es. per Vite)
+  # Comando per costruire la tua app React
   command = "npm run build"
-  # La cartella dove si trovano le tue funzioni
+  # Cartella dove si trova il sito costruito
+  publish = "build"
+  # Cartella dove si trovano le tue funzioni serverless
   functions = "netlify/functions"
-  # La cartella che viene pubblicata dopo la build
-  publish = "dist" # (o "build" se usi Create React App)
 
-# Questa regola reindirizza tutte le chiamate da /api/*
-# alla tua funzione Netlify corrispondente.
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
+[dev]
+  # Porta per l'ambiente di sviluppo locale
+  port = 8888

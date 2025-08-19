@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GitBranch, FileCode, History, CheckCircle, XCircle, AlertTriangle, Loader, Shield, Zap, Bug, Wrench, Search, Globe, Accessibility, ChevronDown, Sparkles } from 'lucide-react';
+import { GitBranch, FileCode, History, CheckCircle, XCircle, AlertTriangle, Loader, Shield, Zap, Bug, Wrench, Search, Globe, Accessibility, ChevronDown } from 'lucide-react';
 
 // --- MOTORI DI ANALISI SIMULATI (CON DETTAGLI SUGLI ERRORI) ---
 
@@ -110,57 +110,7 @@ const StatusIcon = ({ status }) => {
 
 const CheckItem = ({ check }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const [aiSuggestion, setAiSuggestion] = useState('');
-    const [isLoadingAi, setIsLoadingAi] = useState(false);
-    const [aiError, setAiError] = useState('');
-
     const hasDetails = check.details && (check.status === 'warn' || check.status === 'fail');
-
-    const getAiHelp = async () => {
-        setIsLoadingAi(true);
-        setAiError('');
-        setAiSuggestion('');
-
-        const userPrompt = `
-            Fornisci una spiegazione dettagliata e un esempio di codice per risolvere il seguente problema di sviluppo software.
-            Sii chiaro, conciso e formatta la risposta in Markdown.
-
-            Problema:
-            ${check.details.problem}
-
-            Soluzione Iniziale Proposta:
-            ${check.details.solution}
-        `;
-
-        try {
-            const response = await fetch('/api/getAISuggestion', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: userPrompt }),
-            });
-
-            if (!response.ok) {
-                const errorBody = await response.json();
-                throw new Error(errorBody.error?.message || 'Errore durante la richiesta AI.');
-            }
-
-            const data = await response.json();
-            
-            const suggestionText = data.candidates[0]?.content?.parts[0]?.text;
-            if (suggestionText) {
-                setAiSuggestion(suggestionText);
-            } else {
-                throw new Error("La risposta dell'AI non ha un formato valido.");
-            }
-
-        } catch (error) {
-            console.error("Errore durante la chiamata alla funzione Netlify:", error);
-            setAiError(error.message);
-        } finally {
-            setIsLoadingAi(false);
-        }
-    };
-
 
     return (
         <li className="flex flex-col">
@@ -170,16 +120,10 @@ const CheckItem = ({ check }) => {
                     <p className="font-semibold text-gray-700 dark:text-gray-300">{check.text}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">{check.description}</p>
                     {hasDetails && (
-                        <div className="flex items-center space-x-4 mt-1">
-                            <button onClick={() => setIsOpen(!isOpen)} className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center">
-                                {isOpen ? 'Nascondi Dettagli' : 'Mostra Dettagli'}
-                                <ChevronDown className={`w-4 h-4 ml-1 transform transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-                            </button>
-                            <button onClick={getAiHelp} disabled={isLoadingAi} className="text-sm text-purple-600 dark:text-purple-400 hover:underline flex items-center disabled:opacity-50 disabled:cursor-wait">
-                                <Sparkles className="w-4 h-4 mr-1" />
-                                {isLoadingAi ? 'Analisi AI...' : 'Ottieni Suggerimenti AI'}
-                            </button>
-                        </div>
+                        <button onClick={() => setIsOpen(!isOpen)} className="text-sm text-blue-600 dark:text-blue-400 hover:underline mt-1 flex items-center">
+                            {isOpen ? 'Nascondi Dettagli' : 'Mostra Dettagli'}
+                            <ChevronDown className={`w-4 h-4 ml-1 transform transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                        </button>
                     )}
                 </div>
             </div>
@@ -193,20 +137,9 @@ const CheckItem = ({ check }) => {
                     </div>
                 </div>
             )}
-            {isLoadingAi && <div className="mt-2 ml-8 pl-4"><Loader className="animate-spin text-purple-500" /></div>}
-            {aiError && <div className="mt-2 ml-8 pl-4 text-red-500 text-sm bg-red-100 dark:bg-red-900/50 p-2 rounded-md"><strong>Errore AI:</strong> {aiError}</div>}
-            {aiSuggestion && (
-                <div className="mt-2 ml-8 pl-4 border-l-2 border-purple-300 dark:border-purple-700">
-                    <div className="bg-purple-50 dark:bg-purple-900/30 p-4 rounded-lg prose prose-sm dark:prose-invert max-w-none">
-                         <h4 className="flex items-center font-bold text-purple-800 dark:text-purple-200"><Sparkles className="w-5 h-5 mr-2"/> Suggerimento dall'AI</h4>
-                         <div dangerouslySetInnerHTML={{ __html: aiSuggestion.replace(/\n/g, '<br />') }} />
-                    </div>
-                </div>
-            )}
         </li>
     );
 };
-
 
 const ReportCard = ({ title, score, checks, icon }) => {
     const getScoreColor = (s) => {
@@ -411,7 +344,7 @@ export default function App() {
             setHistory(prevHistory => [report, ...prevHistory]);
             setPage('report');
             setIsLoading(false);
-        }, 1500);
+        }, 2500);
     };
 
     const handleViewReport = (report) => {
